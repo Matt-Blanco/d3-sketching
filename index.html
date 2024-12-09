@@ -2,46 +2,79 @@
 <div id="container"></div>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script type="module">
-
-    // Declare the chart dimensions and margins.
     // amount of lines
     const n = 1000
-
     // amount of points along the line
-    const m = 10
+    const m = 12
 
     // "curviness" of the lines, higher number means straighter lines
-    const k = 100
+    const k =400
 
-    function bump(a, n) {
+    const probabilities = Array.from({ length: n }, Math.random);
+    const data = Array.from({ length: n }, () => bumps(m, k))
+
+    function bump(a, k) {
         const x = 1 / (0.1 + Math.random());
         const y = 2 * Math.random() - 0.5;
         const z = 10 / (0.1 + Math.random());
-        for (let i = 0; i < n; ++i) {
-            const w = (i / n - y) * z;
-            a[i] += x * Math.exp(-w * w);
+        for (let i = 0; i < k; ++i) {
+            const w = (i / k - y) * z;
+            a[i] += k * Math.exp(-w * w);
         }
     }
 
-    function bumps(n, m) {
+    function bumps(m, k) {
         const a = [];
-        for (let i = 0; i < n; ++i) a[i] = 0;
-        for (let i = 0; i < m; ++i) bump(a, n);
+        const prob = Math.random()
+        
+        if (prob < 0.33) {
+            for (let i = 0; i < m / 3; ++i) a[i] = 0;
+        } else if (prob >= .80) {
+            for (let i = 0; i < (2 * m) / 3; ++i) a[i] = 0;
+            for (let i = 0; i < m; ++i) a[i] = 0;
+        } else {
+            for (let i = 0; i < (2 * m) / 3; ++i) a[i] = 0;
+        } 
+        
+        // for (let i = 0; i < m; ++i) a[i] = 0;
+
+        for (let i = 0; i < k; ++i) bump(a, m);
         return a;
     };
 
-    const width = window.innerWidth / 2;
+    let colorScales = [
+        d3.scaleLinear()
+            .interpolate(d3.interpolateHcl)
+            .range(["#9AF768", "#F27A4D"]),
+        d3.scaleLinear()
+            //.domain([0,1])
+            .interpolate(d3.interpolateHcl)
+            .range(["#112231", "#3C769D"])
+    ];
+
+
+    const width = 3 * window.innerWidth / 4;
     const height = window.innerHeight;
 
-    const x = d3.scaleLinear([0, m - 1], [0, width]);
+    const xFull = d3.scaleLinear([0, m - 1], [0, width]);
+    const xThird = d3.scaleLinear([0, m - 1], [0, width / 3]);
+    const xTwoThirds = d3.scaleLinear([0, m - 1], [0, (2 * width) / 2]);
+
     const y = d3.scaleLinear([0, 1], [height, 0]);
     const z = d3.interpolateCool;
 
     const area = d3.area()
-        .x((d, i) => x(i))
-        .y0(d => y(d[0]))
-        .curve(d3.curveBumpX)
-        .y1(d => y(d[1]));
+        .x((d, i) => {
+            console.log(i, xFull(i), y(d[0]), y(d[1]))
+            return xFull(i)
+        })
+        .y0((d, i) => {
+            return y(d[0])
+        })
+        .y1(d => {
+            return y(d[1])
+        })
+        .curve(d3.curveBumpX);
 
     const stack = d3.stack()
         .keys(d3.range(n))
@@ -49,7 +82,7 @@
         .order(d3.stackOrderNone);
 
     function randomize() {
-        const layers = stack(d3.transpose(Array.from({ length: n }, () => bumps(m, k))));
+        const layers = stack(d3.transpose(data));
         y.domain([
             d3.min(layers, l => d3.min(l, d => d[0])),
             d3.max(layers, l => d3.max(l, d => d[1]))
@@ -67,6 +100,9 @@
         .data(randomize)
         .join("path")
         .attr("d", area)
-        .attr("fill", () => z(Math.random()));
+        .attr("fill", () => z(Math.random()))
+        .attr("stroke", "white")
+        .attr("stroke-width", "0.5px")
+
     container.append(svg.node());
 </script>
