@@ -38,16 +38,25 @@ function draw() {
   for (let i = 0; i < rows.length; i++) {
     stroke(colors(rows[i].Geography))
 
-    if (!countries.includes(rows[i].Geography)) {
-      console.log(!countries.includes(rows[i].Geography), rows[i].Geography)
-    }
-
     const bezierY2 = yScale2(i) - 400
     const bezierY3 = yScale(i) + 300 * setDirection(rows[i].Geography)
 
     // const bezierY3 = Math.random() >= 0.5 ? yScale(i) * -1 : yScale(i)
 
-    bezier(xScale(rows[i].Geography), yScale0(rows[i].Geography), 2000, bezierY3, 1500, bezierY2, 800, yScale2(i));
+    bezier(xScale(rows[i].Geography), yScale0(rows[i].Geography), 2000, bezierY3, 1500, bezierY2, 800, height / 2);
+    // bezier(windowWidth - 10, yScale(i), windowWidth - 100, bezierY1, 0 + 300, bezierY2, 200, yScale2(i));
+  }
+
+
+  // TODO: Make new scales for phase 2
+  const filtered = rows.filter(() => Math.random() < 0.30)
+  console.log(filtered.length)
+  for (let i = 0; i < filtered.length; i++) {
+    stroke(colors(filtered[i].Geography))
+
+    // const bezierY3 = Math.random() >= 0.5 ? yScale(i) * -1 : yScale(i)
+
+    bezier(800, height / 2, 600, yScale(i), 300, yScale(i) - 300, 100, height / 2);
     // bezier(windowWidth - 10, yScale(i), windowWidth - 100, bezierY1, 0 + 300, bezierY2, 200, yScale2(i));
   }
 
